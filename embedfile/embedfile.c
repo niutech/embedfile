@@ -6,6 +6,8 @@
 #include "embedfile/sqlite-lembed.h"
 #include "embedfile/sqlite-lines.h"
 #include "embedfile/sqlite-vec.h"
+#include "third_party/quickjs/qjs.h"
+#include "third_party/quickjs/quickjs.h"
 #include "llama.cpp/llama.h"
 #include "llamafile/version.h"
 #include "third_party/sqlite/sqlite3.h"
@@ -578,7 +580,10 @@ int main(int argc, char **argv) {
             return cmd_search(dbpath, query);
         } else if (sqlite3_stricmp(arg, "import") == 0) {
             return cmd_import(argc - i, argv + i);
-        } else {
+        } else if(sqlite3_stricmp(arg, "run") == 0) {
+          return qjs_main(argc-i, argv+i);
+        }
+        else {
             printf("Unknown arg %s\n", arg);
             return 1;
         }
