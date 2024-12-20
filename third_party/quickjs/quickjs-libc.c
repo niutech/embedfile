@@ -3920,7 +3920,7 @@ JSModuleDef *js_init_module_os(JSContext *ctx, const char *module_name)
 
 /**********************************************************/
 
-static JSValue js_print(JSContext *ctx, JSValue this_val,
+JSValue js_print(JSContext *ctx, JSValue this_val,
                         int argc, JSValue *argv)
 {
 #ifdef _WIN32

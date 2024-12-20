@@ -28,6 +28,7 @@ o/$(MODE)/embedfile/sqlite-lines.a: o/$(MODE)/embedfile/sqlite-lines.o
 o/$(MODE)/embedfile/sqlite-lembed.o: embedfile/sqlite-lembed.c
 o/$(MODE)/embedfile/sqlite-lembed.a: o/$(MODE)/embedfile/sqlite-lembed.o o/$(MODE)/llama.cpp/llama.cpp.a
 
+
 o/$(MODE)/embedfile/shell.o: embedfile/shell.c
 o/$(MODE)/embedfile/shell.a: o/$(MODE)/embedfile/shell.o
 
@@ -42,8 +43,6 @@ o/$(MODE)/embedfile/embedfile:					\
 		o/$(MODE)/embedfile/embedfile.1.asc.zip.o	\
 		o/$(MODE)/llama.cpp/llama.cpp.a \
 		o/$(MODE)/third_party/sqlite/sqlite3.a \
-		o/$(MODE)/third_party/quickjs/quickjs.a \
-		o/$(MODE)/third_party/quickjs/qjs.a \
 		o/$(MODE)/embedfile/sqlite-csv.a \
 		o/$(MODE)/embedfile/sqlite-vec.a \
 		o/$(MODE)/embedfile/sqlite-lines.a \

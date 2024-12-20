@@ -55,6 +55,9 @@ void js_std_promise_rejection_tracker(JSContext *ctx, JSValue promise,
                                       JS_BOOL is_handled, void *opaque);
 void js_std_set_worker_new_context_func(JSContext *(*func)(JSRuntime *rt));
 
+// Added for llamafile project
+JSValue js_print(JSContext *ctx, JSValue this_val,int argc, JSValue *argv);
+
 #ifdef __cplusplus
 } /* extern "C" { */
 #endif

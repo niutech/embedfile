@@ -41,6 +41,17 @@ o/$(MODE)/third_party/quickjs/qjs:				\
 		o/$(MODE)/third_party/quickjs/libunicode.o		\
 		o/$(MODE)/third_party/quickjs/quickjs-libc.o		\
 
+o//third_party/quickjs/qjsc.a \
+o/$(MODE)/third_party/quickjs/qjsc:				\
+		o/$(MODE)/third_party/quickjs/qjsc.o		\
+		o/$(MODE)/third_party/quickjs/repl.o		\
+		o/$(MODE)/third_party/quickjs/cutils.o	\
+		o/$(MODE)/third_party/quickjs/libbf.o	\
+		o/$(MODE)/third_party/quickjs/quickjs.o		\
+		o/$(MODE)/third_party/quickjs/libregexp.o		\
+		o/$(MODE)/third_party/quickjs/libunicode.o		\
+		o/$(MODE)/third_party/quickjs/quickjs-libc.o		\
+
 o//third_party/quickjs/quickjs.a: o//third_party/quickjs/quickjs.o
 
 o/$(MODE)/third_party/quickjs/qjs.o				\
@@ -63,3 +74,11 @@ o/$(MODE)/third_party/quickjs/libregexp.o				\
 o/$(MODE)/third_party/quickjs/libunicode.o				\
 o/$(MODE)/third_party/quickjs/quickjs-libc.o:				\
 		third_party/quickjs/BUILD.mk
+
+
+
+.PHONY: o/$(MODE)/third_party/quickjs
+o/$(MODE)/third_party/quickjs:					\
+		o/$(MODE)/third_party/sqlite/qjs		\
+		o/$(MODE)/third_party/sqlite/qjsc		\
+		o/$(MODE)/third_party/sqlite/quickjs.a		\
