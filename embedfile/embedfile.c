@@ -93,7 +93,7 @@ int table_exists(sqlite3 *db, const char *table) {
     rc =
         sqlite3_prepare_v2(db, "select ? in (select name from pragma_table_list)", -1, &stmt, NULL);
     CHECK_SQLITE_NOT_OK(rc, db);
-    rc - sqlite3_bind_text(stmt, 1, table, strlen(table), SQLITE_STATIC);
+    rc = sqlite3_bind_text(stmt, 1, table, strlen(table), SQLITE_STATIC);
     CHECK_SQLITE_NOT_OK(rc, db);
     rc = sqlite3_step(stmt);
     CHECK_SQLITE_NOT_ROW(rc, db);
@@ -294,7 +294,7 @@ int monitor_stmt(sqlite3_stmt *stmt, int64_t total) {
                       "   FROM bytecode(?)"
                       "WHERE opcode = 'VUpdate'";
     rc = sqlite3_prepare_v2(sqlite3_db_handle(stmt), sql, -1, &monitorStmt, NULL);
-    CHECK_SQLITE_NOT_OK(rc, db);
+    CHECK_SQLITE_NOT_OK(rc, sqlite3_db_handle(stmt));
     struct aux x = {.monitorStmt = monitorStmt, .stmt = stmt, .total = total};
     x.started_at = time_ms();
     sqlite3_progress_handler(sqlite3_db_handle(stmt), 1000, progress, &x);
