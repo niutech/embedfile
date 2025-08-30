@@ -699,11 +699,15 @@ Client::dispatcher()
         return v1_completions();
     if (p1 == "v1/chat/completions")
         return v1_chat_completions();
+    if (p1 == "v1/models")
+        return v1_models();
     if (p1 == "slotz")
         return slotz();
     if (p1 == "flagz")
         return flagz();
 
+#if 0
+    // TODO: implement frontend for database
     if (p1 == "db/chats" || p1 == "db/chats/")
         return db_chats();
     if (p1.starts_with("db/chat/")) {
@@ -721,6 +725,7 @@ Client::dispatcher()
         if (id != -1)
             return db_messages(id);
     }
+#endif
 
     // serve static endpoints
     int infd;

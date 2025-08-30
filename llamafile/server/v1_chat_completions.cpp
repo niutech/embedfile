@@ -46,6 +46,7 @@ namespace server {
 struct V1ChatCompletionParams
 {
     bool stream = false;
+    bool stream_include_usage = false;
     long max_tokens = -1;
     long seed = _rand64();
     double top_p = 1;
@@ -77,7 +78,7 @@ struct V1ChatCompletionState
 {
     std::string prompt;
     std::vector<Atom> atoms;
-    std::string piece;
+    std::string piece = "";
 };
 
 struct V1ChatCompletionResponse
@@ -243,12 +244,41 @@ Client::get_v1_chat_completions_params(V1ChatCompletionParams* params)
             return send_error(400, "message must have string role");
         if (!is_legal_role(message["role"].getString()))
             return send_error(400, "message role not system user assistant");
-        if (!message["content"].isString())
-            return send_error(400, "message must have string content");
-        if (message["content"].getString().empty())
-            return send_error(400, "message must not have empty content");
-        params->messages.emplace_back(message["role"].getString(),
-                                      message["content"].getString());
+
+        // Accept string or array for content
+        if (message["content"].isString()) {
+            if (message["content"].getString().empty())
+                return send_error(400, "message must not have empty content");
+            params->messages.emplace_back(message["role"].getString(),
+                                          message["content"].getString());
+        } else if (message["content"].isArray()) {
+            std::string combined_content;
+            std::vector<Json>& content_array = message["content"].getArray();
+            if (content_array.empty())
+                return send_error(400, "message content array must not be empty");
+            for (Json& part : content_array) {
+                if (!part.isObject() || !part["type"].isString())
+                    return send_error(400, "content array items must be objects with type");
+                std::string type = part["type"].getString();
+                if (type == "text") {
+                    if (!part["text"].isString())
+                        return send_error(400, "text part must have string text");
+                    combined_content += part["text"].getString();
+                } else if (type == "image_url") {
+                    if (!part["image_url"].isObject() || !part["image_url"]["url"].isString())
+                        return send_error(400, "image_url part must have url string");
+                    // TODO collect image data (?)
+                    // std::string image_url = part["image_url"]["url"].getString();
+                } else {
+                    return send_error(400, "unsupported content part type");
+                }
+            }
+            if (combined_content.empty())
+                return send_error(400, "message must not have empty content");
+            params->messages.emplace_back(message["role"].getString(), combined_content);
+        } else {
+            return send_error(400, "message content must be string or array");
+        }
     }
 
     // n: integer|null
@@ -276,6 +306,26 @@ Client::get_v1_chat_completions_params(V1ChatCompletionParams* params)
         if (!stream.isBool())
             return send_error(400, "stream field must be boolean");
         params->stream = stream.getBool();
+
+        // stream_options: object|null
+        //
+        // Options for the streaming response.
+        Json& stream_options = json["stream_options"];
+        if (!stream_options.isNull()) {
+            if (!stream_options.isObject())
+                return send_error(400, "stream_options field must be object");
+
+            // include_usage: bool|null
+            //
+            // Include usage also for streaming responses. The actual usage will be reported before
+            // the [DONE] message, but all chunks contain an empty usage field.
+            Json& include_usage = stream_options["include_usage"];
+            if (!include_usage.isNull()) {
+                if (!include_usage.isBool())
+                    return send_error(400, "include_usage field must be boolean");
+                params->stream_include_usage = include_usage.getBool();
+            }
+        }
     }
 
     // max_tokens: integer|null
@@ -570,6 +620,8 @@ Client::v1_chat_completions()
             return false;
         choice["delta"]["role"] = "assistant";
         choice["delta"]["content"] = "";
+        if (params->stream_include_usage)
+            response->json["usage"] = nullptr;
     }
 
     // prefill time
@@ -635,19 +687,23 @@ Client::v1_chat_completions()
             finish_reason = "stop";
             break;
         }
-        state->piece =
+        state->piece +=
           llamafile_token_to_piece(slot_->ctx_, id, DONT_RENDER_SPECIAL_TOKENS);
         if (!state->piece.empty()) {
             if (params->stream) {
-                char* p = append_http_response_message(obuf_.p, 200);
-                choice["delta"]["content"] = state->piece;
-                response->json["created"] = timespec_real().tv_sec;
-                response->content = make_event(response->json);
-                choice.getObject().erase("delta");
-                if (!send_response_chunk(response->content))
-                    return false;
+                if (!ends_with_incomplete_utf8(state->piece)) {
+                    char* p = append_http_response_message(obuf_.p, 200);
+                    choice["delta"]["content"] = state->piece;
+                    response->json["created"] = timespec_real().tv_sec;
+                    response->content = make_event(response->json);
+                    choice.getObject().erase("delta");
+                    if (!send_response_chunk(response->content))
+                        return false;
+                    state->piece.clear();
+                }
             } else {
                 response->content += state->piece;
+                state->piece.clear();
             }
         }
     }
@@ -661,6 +717,12 @@ Client::v1_chat_completions()
     if (params->stream) {
         choice["delta"]["content"] = "";
         response->json["created"] = timespec_real().tv_sec;
+        if (params->stream_include_usage) {
+            Json& usage = response->json["usage"];
+            usage["prompt_tokens"] = prompt_tokens;
+            usage["completion_tokens"] = completion_tokens;
+            usage["total_tokens"] = completion_tokens + prompt_tokens;
+        }
         response->content = make_event(response->json);
         choice.getObject().erase("delta");
         if (!send_response_chunk(response->content))
