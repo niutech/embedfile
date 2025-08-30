@@ -1,0 +1,92 @@
+.TH EMBEDFILE 1 "August 2025" "embedfile 0.0.1-alpha.1" "User Commands"
+.SH NAME
+embedfile \- CLI tool for embedding and searching text data using SQLite and LLMs
+.SH SYNOPSIS
+.B embedfile
+[\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR...]
+
+.SH DESCRIPTION
+\fBembedfile\fR is a high-performance command-line tool for generating, storing, and querying vector embeddings from structured or unstructured text data. It leverages \fBllamafile\fR, \fBsqlite-lembed\fR, \fBsqlite-vec\fR, and \fBSQLite\fR to create an embedded semantic search engine with zero external dependencies.
+
+.SH OPTIONS
+.TP
+\fB-m, --model \fIFILE\fR
+Specify the path to the embedding model (.gguf format).
+.TP
+\fB-v, --version\fR
+Show version information for embedfile and dependencies.
+.TP
+\fB-h, --help\fR
+Display help message and usage information.
+
+.SH COMMANDS
+.TP
+.B embedfile embed [TEXT]
+Generate a JSON vector embedding for the input string.
+If \fBTEXT\fR is omitted, reads from standard input line-by-line and emits embeddings.
+
+.TP
+.B embedfile import [--embed COLUMN] [--table NAME] SOURCE_FILE INDEX_DB
+Import a structured file (CSV, JSON, NDJSON, or TXT) into a SQLite database and embed the specified column. If the source is a TXT file, embedding is done on each line.
+
+Options:
+.RS
+.TP
+\fB--embed COLUMN\fR
+The name of the column to embed (required for all formats except TXT).
+.TP
+\fB--table NAME\fR or \fB-t NAME\fR
+Specify table name when importing from a SQLite .db file.
+.RE
+
+.TP
+.B embedfile search INDEX_DB QUERY
+Search the embedded SQLite database using the specified query string and return top 10 semantically similar results.
+
+.TP
+.B embedfile sh
+Launch an interactive SQLite shell with all relevant extensions preloaded.
+
+.SH EXAMPLES
+.TP
+Embed a string:
+.nf
+embedfile embed "hello world"
+.fi
+.TP
+Embed from standard input:
+.nf
+echo "Paris is the capital of France." | embedfile embed
+.fi
+.TP
+Import and embed data from a CSV file:
+.nf
+embedfile --model ./model.gguf import --embed description products.csv products.db
+.fi
+.TP
+Search for similar entries:
+.nf
+embedfile search products.db "wireless headphones"
+.fi
+.TP
+Launch interactive shell:
+.nf
+embedfile sh
+embedfile sh < commands.sql
+.fi
+
+.SH VERSION
+embedfile 0.0.1-alpha.1, llamafile 0.8.16, SQLite 3.47.0, sqlite-vec=v0.1.6, sqlite-lembed=v0.0.1-alpha.8
+
+.SH AUTHOR
+Created by Alex Garcia.
+
+.SH SEE ALSO
+llamafile(1), sqlite3(1), sqlite-lembed, sqlite-vec
+
+.Sh SEE ALSO
+.Xr llamafile 1 ,
+.Xr sqlite3 1 ,
+.Xr sqlite-lembed 1 ,
+.Xr sqlite-vec 1 ,
+.Xr zipalign 1
